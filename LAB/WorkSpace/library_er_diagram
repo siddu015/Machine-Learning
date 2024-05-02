@@ -1,0 +1,14 @@
+digraph {
+	Library [label="Library
+(Library_ID, Name, Location)"]
+	Book [label="Book
+(Book_ID, Title, Author, Year_Published)"]
+	Member [label="Member
+(Member_ID, Name, Address, Phone)"]
+	Borrow [label="Borrow
+(Borrow_ID, Book_ID, Member_ID, Borrow_Date, Return_Date)"]
+	Library -> Book [label=Contains]
+	Library -> Member [label=Registered]
+	Member -> Borrow [label=Borrows]
+	Book -> Borrow [label=Borrowed_By]
+}
