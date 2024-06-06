@@ -79,6 +79,7 @@ data = {
     'PlayTennis': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No']
 }
 
+
 df = pd.DataFrame(data)
 attributes = set(df.columns) - {'PlayTennis'}
 tree = ID3(df, attributes, 'PlayTennis')

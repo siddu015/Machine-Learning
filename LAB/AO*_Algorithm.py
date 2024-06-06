@@ -11,16 +11,17 @@ def Cost(H, condition, weight = 1):
         Path_B = ' OR '.join(OR_nodes)
         PathB = min(H[node] + weight for node in OR_nodes)
         cost[Path_B] = PathB
+
     return cost
 
 
-def update_cost(H, Conditions, weight = 1):
-    Main_nodes = list(Conditions.keys())
+def update_cost(H, conditions, weight = 1):
+    Main_nodes = list(conditions.keys())
     Main_nodes.reverse()
     least_cost = {}
     for key in Main_nodes:
-        condition = Conditions[key]
-        print(key, ':', Conditions[key], ">>>", Cost(H, condition, weight))
+        condition = conditions[key]
+        print(key, ':', conditions[key], ">>>", Cost(H, condition, weight))
         c = Cost(H, condition, weight)
         H[key] = min(c.values())
         least_cost[key] = Cost(H, condition, weight)
