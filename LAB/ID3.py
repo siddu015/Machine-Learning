@@ -1,84 +1,45 @@
 import pandas as pd
 import math
 
-
 class Node:
-    def __init__(self, attribute=None, value=None, result=None):
+    def __init__(self, attribute=None, result=None):
         self.attribute = attribute
-        self.value = value
         self.result = result
         self.children = {}
 
 
-def ID3(examples, attributes, target_attribute):
-    if len(set(examples[target_attribute])) == 1:
-        return Node(result=examples[target_attribute].iloc[0])
-
+def ID3(examples, attributes, target):
+    if len(examples[target].unique()) == 1:
+        return Node(result=examples[target].iloc[0])
     if not attributes:
-        majority_class = examples[target_attribute].mode()[0]
-        return Node(result=majority_class)
+        return Node(result=examples[target].mode()[0])
 
-    best_attribute = choose_attribute(examples, attributes, target_attribute)
-    tree = Node(attribute=best_attribute)
+    best_attr = max(attributes, key=lambda attr: information_gain(examples, attr, target))
+    tree = Node(attribute=best_attr)
 
-    for value in examples[best_attribute].unique():
-        examples_i = examples[examples[best_attribute] == value].drop(columns=[best_attribute])
-        subtree = ID3(examples_i, attributes - {best_attribute}, target_attribute)
-        tree.children[value] = subtree
+    for value, subset in examples.groupby(best_attr):
+        tree.children[value] = ID3(subset.drop(columns=[best_attr]), attributes - {best_attr}, target)
 
     return tree
 
 
-def choose_attribute(examples, attributes, target_attribute):
-    information_gains = {}
-    entropy_S = calculate_entropy(examples[target_attribute])
-
-    for attribute in attributes:
-        entropy_attribute = 0
-        for value in examples[attribute].unique():
-            examples_i = examples[examples[attribute] == value]
-            entropy_i = calculate_entropy(examples_i[target_attribute])
-            entropy_attribute += (len(examples_i) / len(examples)) * entropy_i
-
-        information_gains[attribute] = entropy_S - entropy_attribute
-
-    return max(information_gains, key=information_gains.get)
+def information_gain(examples, attribute, target_attribute):
+    entropy_S = entropy(examples[target_attribute])
+    subset_entropy = sum((len(subset) / len(examples)) * entropy(subset[target_attribute])
+                         for _, subset in examples.groupby(attribute))
+    return entropy_S - subset_entropy
 
 
-def calculate_entropy(attribute_values):
-    entropy = 0
-    total_count = len(attribute_values)
-
-    for value in attribute_values.unique():
-        count = len(attribute_values[attribute_values == value])
-        probability = count / total_count
-        entropy -= probability * math.log2(probability)
-
-    return entropy
-
-
-def classify_example(example, tree):
-    if tree.result is not None:
-        return tree.result
-    else:
-        value = example[tree.attribute]
-        if value in tree.children:
-            return classify_example(example, tree.children[value])
-        else:
-            return tree.children[list(tree.children.keys())[0]].result
+def entropy(attribute_values):
+    value_counts = attribute_values.value_counts(normalize=True)
+    return -sum(p * math.log2(p) for p in value_counts)
 
 
 data = {
-    'Outlook': ['Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain', 'Overcast', 'Sunny', 'Sunny',
-                'Rain'],
-    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Cool', 'Mild', 'Cool', 'Mild'],
-    'Humidity': ['High', 'High', 'High', 'High', 'Normal', 'Normal', 'Normal', 'High', 'Normal',
-                 'Normal'],
-    'Wind': ['Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Strong', 'Strong', 'Weak', 'Weak',
-             'Strong'],
-    'PlayTennis': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No']
+    'Outlook': ['Sunny', 'Overcast'],
+    'Temperature': ['Hot', 'Mild'],
+    'PlayTennis': ['No', 'Yes']
 }
-
 
 df = pd.DataFrame(data)
 attributes = set(df.columns) - {'PlayTennis'}
@@ -87,6 +48,16 @@ tree = ID3(df, attributes, 'PlayTennis')
 print("Decision Tree:")
 print(tree)
 
-new_sample = {'Outlook': 'Sunny', 'Temperature': 'Cool', 'Humidity': 'Normal', 'Wind': 'Strong'}
-classification = classify_example(new_sample, tree)
+new_sample = {'Outlook': 'Overcast', 'Temperature': 'Mild'}
+current_node = tree
+
+while current_node.children:
+    attribute_value = new_sample.get(current_node.attribute)
+    if attribute_value in current_node.children:
+        current_node = current_node.children[attribute_value]
+    else:
+        break
+
+classification = current_node.result
+
 print("Classification for the new sample:", classification)

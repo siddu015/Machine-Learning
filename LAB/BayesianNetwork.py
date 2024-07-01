@@ -1,10 +1,13 @@
 import pandas as pd
+from pgmpy.models import BayesianNetwork
+from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.inference import VariableElimination
+
 
 data= pd.read_csv("heartdisease.csv")
 heart_disease=pd.DataFrame(data)
 print(heart_disease)
 
-from pgmpy.models import BayesianNetwork
 model=BayesianNetwork([
     ('age','Lifestyle'),
     ('Gender','Lifestyle'),
@@ -15,10 +18,8 @@ model=BayesianNetwork([
     ('diet',f'cholestrol')
 ])
 
-from pgmpy.estimators import MaximumLikelihoodEstimator
 model.fit(heart_disease, estimator=MaximumLikelihoodEstimator)
 
-from pgmpy.inference import VariableElimination
 HeartDisease_infer = VariableElimination(model)
 
 

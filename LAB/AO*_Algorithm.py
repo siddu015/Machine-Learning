@@ -1,55 +1,40 @@
-def Cost(H, condition, weight = 1):
+def Cost(H, condition, weight=1):
     cost = {}
+
     if 'AND' in condition:
-        AND_nodes = condition['AND']
-        Path_A = ' AND '.join(AND_nodes)
-        PathA = sum(H[node] + weight for node in AND_nodes)
-        cost[Path_A] = PathA
+        cost[' AND '.join(condition['AND'])] = sum(H[node] + weight for node in condition['AND'])
 
     if 'OR' in condition:
-        OR_nodes = condition['OR']
-        Path_B = ' OR '.join(OR_nodes)
-        PathB = min(H[node] + weight for node in OR_nodes)
-        cost[Path_B] = PathB
+        cost[' OR '.join(condition['OR'])] = min(H[node] + weight for node in condition['OR'])
 
     return cost
 
 
-def update_cost(H, conditions, weight = 1):
-    Main_nodes = list(conditions.keys())
-    Main_nodes.reverse()
+def update_cost(H, conditions, weight=1):
     least_cost = {}
-    for key in Main_nodes:
-        condition = conditions[key]
-        print(key, ':', conditions[key], ">>>", Cost(H, condition, weight))
-        c = Cost(H, condition, weight)
+
+    for key in reversed(conditions):
+        c = Cost(H, conditions[key], weight)
         H[key] = min(c.values())
-        least_cost[key] = Cost(H, condition, weight)
+        least_cost[key] = c
+        print(f"{key} : {conditions[key]} >>> {c}")
 
     return least_cost
 
 
-def shortest_path(Start, Updated_cost, H):
-    Path = Start
-    if Start in Updated_cost.keys():
-        Min_cost = min(Updated_cost[Start].values())
-        key = list(Updated_cost[Start].keys())
-        values = list(Updated_cost[Start].values())
-        Index = values.index(Min_cost)
+def shortest_path(Start, Updated_cost):
+    if Start not in Updated_cost:
+        return Start
 
-        Next = key[Index].split()
+    key = min(Updated_cost[Start], key=Updated_cost[Start].get)
+    Next = key.split()
 
-        if len(Next) == 1:
-            Start = Next[0]
-            Path += '<--' + shortest_path(Start, Updated_cost, H)
-        else:
-            Path += '<--(' + key[Index] + ')'
-            Start = Next[0]
-            Path += ' [' + shortest_path(Start, Updated_cost, H) + ' + '
-            Start = Next[-1]
-            Path += shortest_path(Start, Updated_cost, H) + ']'
+    if len(Next) == 1:
+        return Start + '<--' + shortest_path(Next[0], Updated_cost)
 
-    return Path
+    return Start + '<--(' + key + ') [' + \
+        shortest_path(Next[0], Updated_cost) + ' + ' + \
+        shortest_path(Next[-1], Updated_cost) + ']'
 
 
 H = {'A': -1, 'B': 5, 'C': 2, 'D': 4, 'E': 7, 'F': 9, 'G': 3, 'H': 0, 'I': 0, 'J': 0}
@@ -61,7 +46,7 @@ Conditions = {
 }
 weight = 1
 
-print('Updated Cost :')
+print('Updated Cost:')
 Updated_cost = update_cost(H, Conditions, weight)
 print('*' * 75)
-print('Shortest Path: \n', shortest_path('A', Updated_cost, H))
+print('Shortest Path:\n', shortest_path('A', Updated_cost))
